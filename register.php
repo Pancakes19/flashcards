@@ -1,18 +1,22 @@
 <?php
 include 'config.php'; 
+session_start(); // Make sure session is started!
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST["email"];
     $password = $_POST["password"];
 
-    // Hash password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-    // Prepare insert (now using email instead of username)
     $stmt = $pdo->prepare("INSERT INTO users (email, password) VALUES (?, ?)");
     try {
         $stmt->execute([$email, $hashedPassword]);
-        echo "Registration successful!";
+        // 1. Get the new user's id
+        $userId = $pdo->lastInsertId();
+        // 2. Log them in immediately
+        $_SESSION["user_id"] = $userId;
+        // 3. Redirect to dashboard
+        header('Location: dashboard.php');
+        exit;
     } catch (PDOException $e) {
         echo "Error: " . $e->getMessage();
     }
